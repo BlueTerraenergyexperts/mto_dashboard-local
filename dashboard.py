@@ -1,4 +1,5 @@
 from io import BytesIO
+from pathlib import Path
 
 import plotly.graph_objects as go
 import streamlit as st
@@ -70,17 +71,14 @@ with col_logo:
 
 st.sidebar.header("⚙️ Instellingen")
 
-uploaded_file = st.sidebar.file_uploader(
-    "📂 Upload Excel inputbestand",
-    type=["xlsx", "xls"],
-    help="Upload hetzelfde type inputbestand als MTO_model_input (1).xlsx",
-)
-
-if uploaded_file is None:
-    st.info("Upload eerst een Excel-bestand om de berekeningen te starten.")
+input_file_path = Path(__file__).resolve().parent / "MTO_model_input_opleverversie.xlsx"
+if not input_file_path.exists():
+    st.error(
+        "Het Excel-bestand 'MTO_model_input_opleverversie.xlsx' is niet gevonden in de projectmap."
+    )
     st.stop()
 
-file_content = uploaded_file.getvalue()
+file_content = input_file_path.read_bytes()
 crop_options = cached_list_crop_sheets(file_content)
 # Filter out unwanted sheets (e.g. lijsten, eigen profiel)
 crop_options = [c for c in crop_options if c.lower() not in ("lijsten", "eigen profiel")]
@@ -96,23 +94,26 @@ mto_flow_limit = st.sidebar.slider(
     help="Stel de flow direct in tussen 50 en 150 m³/h.",
 )
 
-temp_cold_well = st.sidebar.slider(
-    "❄️ Temp koude bron (°C)",
-    min_value=10,
-    max_value=25,
-    value=25,
-    step=1,
-    help="Stel de temperatuur van de koude bron in.",
-)
+# temp_cold_well = st.sidebar.slider(
+#     "❄️ Temp koude bron (°C)",
+#     min_value=10,
+#     max_value=25,
+#     value=25,
+#     step=1,
+#     help="Stel de temperatuur van de koude bron in.",
+# )
 
-temp_hot_well = st.sidebar.slider(
-    "🔥 Temp warme bron (°C)",
-    min_value=40,
-    max_value=60,
-    value=50,
-    step=1,
-    help="Stel de temperatuur van de warme bron in.",
-)
+# temp_hot_well = st.sidebar.slider(
+#     "🔥 Temp warme bron (°C)",
+#     min_value=40,
+#     max_value=60,
+#     value=50,
+#     step=1,
+#     help="Stel de temperatuur van de warme bron in.",
+# )
+
+temp_cold_well = 25
+temp_hot_well = 50
 
 years = 3
 
@@ -147,7 +148,7 @@ geo_power = st.sidebar.slider(
 )
 
 st.sidebar.markdown("---")
-st.sidebar.markdown(f"**Bestand:** {uploaded_file.name}")
+st.sidebar.markdown(f"**Bestand:** {input_file_path.name}")
 st.sidebar.markdown(f"**MTO flow limit:** {mto_flow_limit} m³/h")
 
 run_requested = st.sidebar.button("▶️ Run model")
