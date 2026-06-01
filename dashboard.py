@@ -65,7 +65,14 @@ def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: 
 col_title, col_logo = st.columns([4, 1])
 with col_title:
     st.title("🔥 Dashboard MTO warmteopslag")
-    st.caption("Rekenmodel van BlueTerra voor het simuleren van midden temperatuur warmteopslag in de bodem. De input voor dit model betreft een uurwaarden energieprofiel, en een lijst met parameters. Het model berekent op uurbasis de warmtemix en de ontrekkings- en injectietemperaturen van de bron. Het model gebruikt de energie-eenheid megawattuur (MWh). Om dit om te rekenen naar m³ aardgas kan je MWh vermenigvuldigen met 113,76. Dit model is in ontwikkeling.")
+    st.caption(
+        "Rekenmodel van BlueTerra voor het simuleren van midden temperatuur warmteopslag in de bodem. "
+        "Dit model is ontwikkeld vanuit het TKI project MTO in de glastuinbouw. "
+        "De input voor dit model betreft een uurwaarden energieprofiel, en een lijst met parameters. "
+        "Het model berekent op uurbasis de warmtemix en de ontrekkings- en injectietemperaturen van de bron. "
+        "Het model gebruikt de energie-eenheid megawattuur (MWh). Om dit om te rekenen naar m³ aardgas kan je MWh "
+        "vermenigvuldigen met 113,76. Dit model is in ontwikkeling."
+    )
 with col_logo:
     st.image("logo-1 BT.png", width=140)
 
