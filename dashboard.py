@@ -1,3 +1,5 @@
+import hashlib
+import time
 from io import BytesIO
 from pathlib import Path
 
@@ -21,19 +23,55 @@ def cached_list_crop_sheets(file_content: bytes):
     return list_crop_sheets(file_content)
 
 
-@st.cache_data(show_spinner=False)
-def cached_run_dashboard_calculation(file_content: bytes, crop: str, mto_flow_limit: float, years: int = 3, geo_power: float = None, chp_power: float = None, target_heat_demand_gwh: float = None, temp_cold_well: float = 25, temp_hot_well: float = 50):
-    return run_dashboard_calculation(
-        file_content,
-        crop=crop,
-        mto_flow_limit_override=mto_flow_limit,
-        years=years,
-        geo_power=geo_power,
-        chp_power=chp_power,
-        target_heat_demand_gwh=target_heat_demand_gwh,
-        temp_cold_well=temp_cold_well,
-        temp_hot_well=temp_hot_well,
+CACHE_TTL_SECONDS = 8 * 3600
+CACHE_MAX_ENTRIES = 50
+
+
+def _round_or_none(value: float | None, digits: int = 4):
+    if value is None:
+        return None
+    return round(float(value), digits)
+
+
+def build_scenario_key(file_content: bytes, crop: str, mto_flow_limit: float, years: int, geo_power: float | None, chp_power: float | None, target_heat_demand_gwh: float | None, temp_cold_well: float, temp_hot_well: float):
+    file_hash = hashlib.sha256(file_content).hexdigest()
+    return (
+        file_hash,
+        crop,
+        int(years),
+        _round_or_none(mto_flow_limit, 3),
+        _round_or_none(geo_power, 3),
+        _round_or_none(chp_power, 3),
+        _round_or_none(target_heat_demand_gwh, 6),
+        _round_or_none(temp_cold_well, 3),
+        _round_or_none(temp_hot_well, 3),
     )
+
+
+def get_cached_scenario_result(scenario_key):
+    cache = st.session_state.setdefault("scenario_result_cache", {})
+    now = time.time()
+    expired_keys = [k for k, v in cache.items() if now - v["ts"] > CACHE_TTL_SECONDS]
+    for k in expired_keys:
+        cache.pop(k, None)
+
+    item = cache.get(scenario_key)
+    if item is None:
+        return None, False
+
+    item["ts"] = now
+    cache[scenario_key] = item
+    return item["result"], True
+
+
+def set_cached_scenario_result(scenario_key, result):
+    cache = st.session_state.setdefault("scenario_result_cache", {})
+    now = time.time()
+    cache[scenario_key] = {"ts": now, "result": result}
+
+    while len(cache) > CACHE_MAX_ENTRIES:
+        oldest_key = min(cache, key=lambda k: cache[k]["ts"])
+        cache.pop(oldest_key, None)
 
 
 def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: float, years: int = 3, geo_power: float = None, chp_power: float = None, target_heat_demand_gwh: float = None, temp_cold_well: float = 25, temp_hot_well: float = 50):
@@ -163,17 +201,34 @@ if not run_requested:
     st.sidebar.info("Klik op 'Run model' nadat u het Excel-bestand hebt geüpload en de parameters hebt ingesteld.")
     st.stop()
 
-df_results, kpis, flow_min, flow_max = run_dashboard_with_progress(
-    file_content,
-    crop,
-    mto_flow_limit,
+scenario_key = build_scenario_key(
+    file_content=file_content,
+    crop=crop,
+    mto_flow_limit=mto_flow_limit,
     years=years,
     geo_power=geo_power,
     chp_power=chp_power,
     target_heat_demand_gwh=target_heat_demand_gwh,
+    temp_cold_well=temp_cold_well,
+    temp_hot_well=temp_hot_well,
 )
 
-st.sidebar.success("Berekening gereed")
+cached_result, cache_hit = get_cached_scenario_result(scenario_key)
+if cache_hit:
+    df_results, kpis, flow_min, flow_max = cached_result
+    st.sidebar.info("Resultaat geladen uit cache")
+else:
+    df_results, kpis, flow_min, flow_max = run_dashboard_with_progress(
+        file_content,
+        crop,
+        mto_flow_limit,
+        years=years,
+        geo_power=geo_power,
+        chp_power=chp_power,
+        target_heat_demand_gwh=target_heat_demand_gwh,
+    )
+    set_cached_scenario_result(scenario_key, (df_results, kpis, flow_min, flow_max))
+    st.sidebar.success("Berekening gereed")
 
 st.markdown("### 📊 KPI-overzicht")
 col1, col2, col3, col4, col5 = st.columns(5)
