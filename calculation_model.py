@@ -620,7 +620,7 @@ def run_simulation(n_hours, techs, demand_profiles, energy_prices, temp_cold_wel
     for t in range(n_hours):
         for name in ["Geothermal", "Eboiler", "CHP", "Buffer", "Condenser", "MTS", "Gasboiler"]:
             if name == "Buffer":
-                techs[name].apply_buffer(t, demand_profiles, techs=techs, buff_tech_list=["Eboiler", "CHP", "Condenser", "Geothermal"])
+                techs[name].apply_buffer(t, demand_profiles, techs=techs, buff_tech_list=["Eboiler", "CHP"])
             elif name == "MTS":
                 techs[name].apply_MTS(
                     t,
