@@ -165,9 +165,9 @@ def initialize_techs(n_hours, excel_params):
     techs = {name: Tech(name, n_hours) for name in tech_names}
 
     hourly_fields = {
-        "Condenser": ["to_MTS", "electricity_use", "COP"],
+        "Condenser": ["to_MTS", "electricity_use", "COP", "to_buffer"],
         "CHP": ["to_buffer", "to_MTS"],
-        "Geothermal": ["to_MTS"],
+        "Geothermal": ["to_MTS", "to_buffer"],
         "Eboiler": ["to_buffer", "to_MTS"],
         "Buffer": ["charging", "discharging", "charge", "losses"],
         "MTS": [
