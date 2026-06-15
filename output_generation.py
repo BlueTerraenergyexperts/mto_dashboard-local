@@ -25,12 +25,17 @@ def build_kpis(demand_profiles, techs, mto_flow_limit, runtime_start):
     mts_charging = techs["MTS"].charging[-8760:].sum()
     eff = (techs["MTS"].direct_use[-8760:].sum() / mts_charging) if mts_charging != 0 else 0
     total_heat_demand_gwh = round(demand_profiles["Heat Demand"][-8760:].sum() / 1e6, 2)
+    total_electricity_use_gwh = round(
+        (techs["MTS"].electricity_use[-8760:].sum() + techs["Condenser"].electricity_use[-8760:].sum()) / 1e6,
+        2,
+    )
 
     return {
         "MTO_flow_limit": mto_flow_limit,
         "Totale warmtevraag (laatste jaar)": total_heat_demand_gwh,
         "Verplaatste GWh (laatste jaar)": round(techs["MTS"].direct_use[-8760:].sum() / 1e6, 2),
         "MTO efficiency (laatste jaar)": round(eff, 2),
+        "Elektriciteitsgebruik": total_electricity_use_gwh,
         "Rekentijd_s": round(time.time() - runtime_start, 2),
         "nr_doubletten": round(techs["MTS"].nr_doubletten, 0),
     }

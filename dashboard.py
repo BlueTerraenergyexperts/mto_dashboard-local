@@ -1,5 +1,6 @@
 import hashlib
 import time
+from datetime import date
 from io import BytesIO
 from pathlib import Path
 
@@ -26,6 +27,12 @@ def cached_list_crop_sheets(file_content: bytes):
 CACHE_TTL_SECONDS = 8 * 3600
 CACHE_MAX_ENTRIES = 50
 
+APP_VERSION = "0.2.0-beta"
+APP_RELEASE_DATE = date.today().isoformat()
+GITHUB_URL = "https://github.com/Jlar01/mto_dashboard-local"
+COMPANY_NAME = "BlueTerra"
+COMPANY_URL = "https://blueterra.nl"
+AUTHOR_NAME = "Jeroen Larrivee"
 
 def _round_or_none(value: float | None, digits: int = 4):
     if value is None:
@@ -109,7 +116,7 @@ with col_title:
         "De input voor dit model betreft een uurwaarden energieprofiel, en een lijst met parameters. "
         "Het model berekent op uurbasis de warmtemix en de ontrekkings- en injectietemperaturen van de bron. "
         "Het model gebruikt de energie-eenheid megawattuur (MWh). Om dit om te rekenen naar m³ aardgas kan je MWh "
-        "vermenigvuldigen met 113,76. Dit model is in ontwikkeling."
+        "vermenigvuldigen met 113,76. Dit model is gebaseerd op onderzoek van Bert Kerst en is in ontwikkeling."
     )
 with col_logo:
     st.image("logo-1 BT.png", width=140)
@@ -157,7 +164,7 @@ mto_flow_limit = st.sidebar.slider(
 #     help="Stel de temperatuur van de warme bron in.",
 # )
 
-temp_cold_well = 25
+temp_cold_well = 15
 temp_hot_well = 50
 
 years = 3
@@ -187,7 +194,7 @@ geo_power = st.sidebar.slider(
     "🌡️ Aardwarmte (kW)",
     min_value=0.0,
     max_value=2000.0,
-    value=1000.0,
+    value=700.0,
     step=100.0,
     help="Pas de geothermal power aan (overschrijft Excel-waarde)",
 )
@@ -195,6 +202,18 @@ geo_power = st.sidebar.slider(
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"**Bestand:** {input_file_path.name}")
 st.sidebar.markdown(f"**MTO flow limit:** {mto_flow_limit} m³/h")
+st.sidebar.markdown("---")
+st.sidebar.markdown(
+    f"**Versie:** {APP_VERSION}  \
+"
+    f"**Datum:** {APP_RELEASE_DATE}  \
+"
+    f"**Auteur:** {AUTHOR_NAME}  \
+"
+    f"[Laatste versie op GitHub]({GITHUB_URL})  \
+"
+    f"[{COMPANY_NAME}]({COMPANY_URL})"
+)
 
 run_requested = st.sidebar.button("▶️ Run model")
 if not run_requested:
@@ -226,17 +245,20 @@ else:
         geo_power=geo_power,
         chp_power=chp_power,
         target_heat_demand_gwh=target_heat_demand_gwh,
+        temp_cold_well=temp_cold_well,
+        temp_hot_well=temp_hot_well,
     )
     set_cached_scenario_result(scenario_key, (df_results, kpis, flow_min, flow_max))
     st.sidebar.success("Berekening gereed")
 
 st.markdown("### 📊 KPI-overzicht")
-col1, col2, col3, col4, col5 = st.columns(5)
+col1, col2, col3, col4, col5, col6 = st.columns(6)
 col1.metric("Aantal doubletten", f"{nl(kpis['nr_doubletten'], 0)}")
 col2.metric("Max flow per doublet", f"{nl(kpis['MTO_flow_limit'], 0)} m³/h")
 col3.metric("Totale warmtevraag", f"{nl(kpis['Totale warmtevraag (laatste jaar)'] * 1000, 0)} MWh")
 col4.metric("Geleverde warmte MTO", f"{nl(kpis['Verplaatste GWh (laatste jaar)'] * 1000, 0)} MWh")
-col5.metric("Rendement MTO", f"{nl(kpis['MTO efficiency (laatste jaar)'] * 100, 1)}%")
+col5.metric("Elektriciteitsgebruik", f"{nl(kpis['Elektriciteitsgebruik'] * 1000, 0)} MWh")
+col6.metric("Rendement MTO", f"{nl(kpis['MTO efficiency (laatste jaar)'] * 100, 1)}%")
 
 st.markdown("### 📈 Warmtemix (dagsommen)")
 fig = go.Figure()
