@@ -24,7 +24,7 @@ def cached_list_crop_sheets(file_content: bytes):
     return list_crop_sheets(file_content)
 
 
-CACHE_TTL_SECONDS = 8 * 3600
+CACHE_TTL_SECONDS = 24 * 3600
 CACHE_MAX_ENTRIES = 50
 
 APP_VERSION = "0.2.0-beta"
@@ -33,6 +33,7 @@ GITHUB_URL = "https://github.com/Jlar01/mto_dashboard-local"
 COMPANY_NAME = "BlueTerra"
 COMPANY_URL = "https://blueterra.nl"
 AUTHOR_NAME = "Jeroen Larrivee"
+RESEARCHER_NAME = "Bert Kerst"
 
 def _round_or_none(value: float | None, digits: int = 4):
     if value is None:
@@ -138,7 +139,7 @@ default_crop_ix = crop_options.index("Tomaat") if "Tomaat" in crop_options else 
 crop = st.sidebar.selectbox("🌱 Gewas / sheet", crop_options, index=default_crop_ix)
 
 mto_flow_limit = st.sidebar.slider(
-    "💧 MTO debiet (m³/h)",
+    "💧 MTO debiet per doublet (m³/h)",
     min_value=50,
     max_value=150,
     value=80,
@@ -264,12 +265,12 @@ st.markdown("### 📈 Warmtemix (dagsommen)")
 fig = go.Figure()
 df_output_dag = build_daily_output(df_results)
 output_columns = [
-    column for column in ["Aardwarmte_Output", "Condenser_Output", "MTO_Output", "WKK_Output", "Ketel_Output"]
+    column for column in ["Aardwarmte_Output", "Koelmachine_warmte", "MTO_Output", "WKK_Output", "Ketel_Output"]
     if column in df_output_dag.columns
 ]
 output_colors = {
     "Aardwarmte_Output": "#009EE0",
-    "Condenser_Output": "#29b5e8",
+    "Koelmachine_warmte": "#29b5e8",
     "MTO_Output": "#3AA935",
     "WKK_Output": "#A6A6A6",
     "Ketel_Output": "#FE6D73"

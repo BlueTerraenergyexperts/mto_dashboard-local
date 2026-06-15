@@ -15,8 +15,10 @@ def build_results_frame(demand_profiles, techs, ates, timesteps, crop=None):
         "T_cold_all": ates.T_cold_all[-8760:],
     }
 
-    if isinstance(crop, str) and crop.strip().lower() == "Orchidee":
-        results["Condenser_Output"] = techs["Condenser"].direct_use[-8760:]
+    if "Condenser" in techs:
+        results["Koelmachine_warmte"] = techs["Condenser"].direct_use[-8760:]
+        if isinstance(crop, str) and crop.strip().lower() == "orchidee":
+            results["Condenser_Output"] = techs["Condenser"].direct_use[-8760:]
 
     return pd.DataFrame(results)
 
@@ -42,12 +44,16 @@ def build_kpis(demand_profiles, techs, mto_flow_limit, runtime_start):
 
 
 def build_daily_output(df_results):
+    df = df_results.copy()
+    if "Condenser_Output" in df.columns and "Koelmachine_warmte" not in df.columns:
+        df["Koelmachine_warmte"] = df["Condenser_Output"]
+
     output_columns = [
-        column for column in ["Aardwarmte_Output", "Condenser_Output", "MTO_Output", "WKK_Output", "Ketel_Output"]
-        if column in df_results.columns
+        column for column in ["Aardwarmte_Output", "Koelmachine_warmte", "MTO_Output", "WKK_Output", "Ketel_Output"]
+        if column in df.columns
     ]
     return (
-        df_results
+        df
         .set_index("Timestep")[output_columns]
         .resample("D")
         .sum()
