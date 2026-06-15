@@ -168,7 +168,12 @@ mto_flow_limit = st.sidebar.slider(
 temp_cold_well = 15
 temp_hot_well = 50
 
-years = 3
+years = st.sidebar.radio(
+    "📅 Aantal jaren",
+    [3, 5],
+    index=0,
+    help="Kies het aantal jaarreeks voor de berekening.",
+)
 
 # Sliders: eerst warmtevraag, dan WKK (CHP) vermogen, dan geothermal
 target_heat_demand_mwh = st.sidebar.slider(
