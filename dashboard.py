@@ -170,7 +170,7 @@ temp_hot_well = 50
 years = st.sidebar.radio(
     "📅 Aantal simulatiejaren",
     [1, 3, 5],
-    index=0,
+    index=1,
     help="Kies het aantal jaarreeks voor de berekening.",
 )
 
