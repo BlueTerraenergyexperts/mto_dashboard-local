@@ -27,7 +27,7 @@ def cached_list_crop_sheets(file_content: bytes):
 CACHE_TTL_SECONDS = 24 * 3600
 CACHE_MAX_ENTRIES = 50
 
-APP_VERSION = "0.2.0-beta"
+APP_VERSION = "0.2.1"
 APP_RELEASE_DATE = date.today().isoformat()
 GITHUB_URL = "https://github.com/Jlar01/mto_dashboard-local"
 COMPANY_NAME = "BlueTerra"
@@ -138,7 +138,7 @@ default_crop_ix = crop_options.index("Tomaat") if "Tomaat" in crop_options else 
 crop = st.sidebar.selectbox("🌱 Gewas / sheet", crop_options, index=default_crop_ix)
 
 mto_flow_limit = st.sidebar.slider(
-    "💧 MTO debiet per doublet (m³/h)",
+    "💧 MTO debiet (m³/h)",
     min_value=50,
     max_value=150,
     value=80,
@@ -146,14 +146,14 @@ mto_flow_limit = st.sidebar.slider(
     help="Stel de flow direct in tussen 50 en 150 m³/h.",
 )
 
-# temp_cold_well = st.sidebar.slider(
-#     "❄️ Temp koude bron (°C)",
-#     min_value=10,
-#     max_value=25,
-#     value=25,
-#     step=1,
-#     help="Stel de temperatuur van de koude bron in.",
-# )
+temp_cold_well = st.sidebar.slider(
+    "❄️ Temp koude bron (°C)",
+    min_value=10,
+    max_value=25,
+    value=15,
+    step=1,
+    help="Stel de temperatuur van de koude bron in.",
+)
 
 # temp_hot_well = st.sidebar.slider(
 #     "🔥 Temp warme bron (°C)",
@@ -164,11 +164,11 @@ mto_flow_limit = st.sidebar.slider(
 #     help="Stel de temperatuur van de warme bron in.",
 # )
 
-temp_cold_well = 15
+#temp_cold_well = 15
 temp_hot_well = 50
 
 years = st.sidebar.radio(
-    "📅 Aantal jaren",
+    "📅 Aantal simulatiejaren",
     [1, 3, 5],
     index=0,
     help="Kies het aantal jaarreeks voor de berekening.",
@@ -257,13 +257,11 @@ else:
     st.sidebar.success("Berekening gereed")
 
 st.markdown("### 📊 KPI-overzicht")
-col1, col2, col3, col4, col5, col6 = st.columns(6)
-col1.metric("Aantal doubletten", f"{nl(kpis['nr_doubletten'], 0)}")
-col2.metric("Max flow per doublet", f"{nl(kpis['MTO_flow_limit'], 0)} m³/h")
-col3.metric("Totale warmtevraag", f"{nl(kpis['Totale warmtevraag (laatste jaar)'] * 1000, 0)} MWh")
-col4.metric("Geleverde warmte MTO", f"{nl(kpis['Verplaatste GWh (laatste jaar)'] * 1000, 0)} MWh")
-col5.metric("Elektriciteitsgebruik", f"{nl(kpis['Elektriciteitsgebruik'] * 1000, 0)} MWh")
-col6.metric("Rendement MTO", f"{nl(kpis['MTO efficiency (laatste jaar)'] * 100, 1)}%")
+col1, col2, col3, col4 = st.columns(4)
+col1.metric("Totale warmtevraag", f"{nl(kpis['Totale warmtevraag (laatste jaar)'] * 1000, 0)} MWh")
+col2.metric("Geleverde warmte MTO", f"{nl(kpis['Verplaatste GWh (laatste jaar)'] * 1000, 0)} MWh")
+col3.metric("Elektriciteitsgebruik", f"{nl(kpis['Elektriciteitsgebruik'] * 1000, 0)} MWh")
+col4.metric("Rendement MTO", f"{nl(kpis['MTO efficiency (laatste jaar)'] * 100, 1)}%")
 
 st.markdown("### 📈 Warmtemix (dagsommen)")
 fig = go.Figure()
