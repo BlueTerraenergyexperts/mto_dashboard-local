@@ -33,7 +33,6 @@ GITHUB_URL = "https://github.com/Jlar01/mto_dashboard-local"
 COMPANY_NAME = "BlueTerra"
 COMPANY_URL = "https://blueterra.nl"
 AUTHOR_NAME = "Jeroen Larrivee"
-RESEARCHER_NAME = "Bert Kerst"
 
 def _round_or_none(value: float | None, digits: int = 4):
     if value is None:
@@ -170,7 +169,7 @@ temp_hot_well = 50
 
 years = st.sidebar.radio(
     "📅 Aantal jaren",
-    [3, 5],
+    [1, 3, 5],
     index=0,
     help="Kies het aantal jaarreeks voor de berekening.",
 )
