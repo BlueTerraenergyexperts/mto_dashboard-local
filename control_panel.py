@@ -1,3 +1,9 @@
+"""Control panel module for running MTO thermal energy model simulations.
+
+This module orchestrates the execution of thermal energy system simulations,
+managing input processing, model initialization, simulation execution, and
+output generation.
+"""
 import time
 
 from calculation_model import ATESDoublet, initialize_techs, run_simulation
@@ -6,6 +12,34 @@ from output_generation import build_kpis, build_results_frame
 
 
 def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str = None, mto_flow_limit_override: float = None, years: int = 1, geo_power: float = None, chp_power: float = None, target_heat_demand_gwh: float = None, temp_cold_well: float = 25, temp_hot_well: float = 50, progress_callback=None):
+    """Run a complete thermal energy system simulation.
+
+    Executes a simulation of the ATES doublet thermal energy storage system with
+    various energy technologies (geothermal, CHP, MTS). Processes input parameters,
+    initializes the model, runs the simulation, and generates results and KPIs.
+
+    Args:
+        file_content (bytes): Binary content of input configuration file.
+        crop (str): Crop type identifier for demand profile selection.
+        flow_mode (str, optional): Flow mode setting ("High Flow" or low flow).
+            Determines MTS flow limit if mto_flow_limit_override is not set.
+        mto_flow_limit_override (float, optional): Direct override for MTS flow limit (m³/h).
+            If provided, supersedes flow_mode setting.
+        years (int, optional): Number of simulation years. Defaults to 1.
+        geo_power (float, optional): Override geothermal thermal power (MW).
+        chp_power (float, optional): Override CHP thermal power (MW).
+        target_heat_demand_gwh (float, optional): Target annual heat demand (GWh).
+        temp_cold_well (float, optional): Cold well temperature (°C). Defaults to 25.
+        temp_hot_well (float, optional): Hot well temperature (°C). Defaults to 50.
+        progress_callback (callable, optional): Callback function for progress updates.
+
+    Returns:
+        tuple: A tuple containing:
+            - df_results (pd.DataFrame): Simulation results with timestep-level data.
+            - kpis (dict): Key performance indicators including costs, efficiency, etc.
+            - flow_min (float): Minimum MTS flow limit (m³/h).
+            - flow_max (float): Maximum MTS flow limit (m³/h).
+    """
     demand_profiles, energy_prices, n_hours, input_params, settings, timesteps = get_input(
         file_content,
         crop=crop,
