@@ -18,7 +18,29 @@ except ImportError:
 
 
 class Tech:
+    """
+    Represents a heating/cooling technology unit in the energy system.
+    
+    This class manages the operational characteristics and power calculations
+    for various technologies (e.g., heat pump, CHP, boiler) in the district
+    heating and cooling network.
+    
+    Attributes:
+        name (str): Name identifier for the technology
+        N_hours (int): Number of hourly time steps
+        available_power (np.ndarray): Hourly available power output [kW]
+        direct_use (np.ndarray): Hourly power directly used to meet demand [kW]
+        residual (np.ndarray): Hourly excess power not used [kW]
+    """
     def __init__(self, name, n_hours, **kwargs):
+        """
+        Initialize a technology unit.
+        
+        Args:
+            name (str): Technology name
+            n_hours (int): Number of time steps in simulation
+            **kwargs: Additional technology-specific attributes
+        """
         self.name = name
         self.N_hours = n_hours
         self.available_power = np.zeros(n_hours)
@@ -28,15 +50,37 @@ class Tech:
             setattr(self, k, v)
 
     def _require(self, *attrs):
+        """
+        Verify that required attributes exist and are not None.
+        
+        Args:
+            *attrs: Variable length argument list of attribute names to check
+            
+        Raises:
+            ValueError: If any required attribute is missing or None
+        """
         for a in attrs:
             if not hasattr(self, a) or getattr(self, a) is None:
                 raise ValueError(f"{a} must be defined before calculation.")
 
     def _set_constant_power(self):
+        """Set available power to constant thermal power for all time steps."""
         self._require("thermal_power")
         self.available_power[:] = self.thermal_power
 
     def calc_condenser_available_power(self, prices, cold_demand, outside_temp, geo_price):
+        """
+        Calculate available cooling power from condenser heat recovery unit.
+        
+        Determines deployment strategy based on electricity prices and compares
+        heat pump upgrade vs. natural cooling options.
+        
+        Args:
+            prices (dict): Dictionary with 'Elec Price' hourly electricity prices
+            cold_demand (np.ndarray): Hourly cold demand [kW]
+            outside_temp (np.ndarray): Hourly outside temperature [°C]
+            geo_price (float): Price threshold from geothermal technology [€/kWh]
+        """
         self._require("COP_upgrading", "Carnot")
         self.COP_nupg = self.Carnot * (14 + 273) / np.maximum(1, (outside_temp + 12) - 14)
         self.deployment_price = prices["Elec Price"] * ((1 / (self.COP_upgrading + 1)) - (1 / self.COP_nupg))
@@ -46,6 +90,16 @@ class Tech:
         self.available_power = self.deployment * (cold_demand + self.electricity_use)
 
     def calc_chp_available_power(self, prices, geo_price):
+        """
+        Calculate available power from combined heat and power (CHP) unit.
+        
+        Compares electricity price against the cost of natural gas-based heat
+        production to determine deployment.
+        
+        Args:
+            prices (dict): Dictionary with 'Gas Price' and 'Elec Price' [€/kWh]
+            geo_price (float): Price threshold from geothermal technology [€/kWh]
+        """
         self._require("thermal_efficiency", "electrical_efficiency", "thermal_power", "maintenance_costs")
         self.deployment_price = (
             (prices["Gas Price"] - geo_price * self.thermal_efficiency) / self.electrical_efficiency
@@ -55,17 +109,38 @@ class Tech:
         self.available_power = self.deployment * self.thermal_power
 
     def calc_geothermal_available_power(self):
+        """Calculate available power from geothermal heat source (constant supply)."""
         self._set_constant_power()
 
     def calc_eboiler_available_power(self, prices):
+        """
+        Calculate available power from electric boiler.
+        
+        Deployment determined by comparing electricity price against
+        technology-specific deployment price threshold.
+        
+        Args:
+            prices (dict): Dictionary with 'Elec Price' hourly electricity prices [€/kWh]
+        """
         self._require("thermal_power", "deployment_price")
         self.deployment = prices["Elec Price"] <= self.deployment_price
         self.available_power = self.deployment * self.thermal_power
 
     def calc_gasboiler_power(self):
+        """Calculate available power from gas boiler (constant thermal power)."""
         self._set_constant_power()
 
     def apply_tech(self, t, demand_profiles):
+        """
+        Apply technology to meet heat demand at a specific time step.
+        
+        Updates residual heat demand based on available power and tracks
+        direct usage and residual power.
+        
+        Args:
+            t (int): Current time step (hour)
+            demand_profiles (dict): Dictionary containing demand and residual demand arrays
+        """
         col_name = f"Residual Heat Demand after {self.name}"
         demand_profiles.setdefault(col_name, np.zeros_like(demand_profiles["Heat Demand"]))
 
@@ -80,6 +155,19 @@ class Tech:
         demand_profiles[col_name][t] = new_residual
 
     def apply_buffer(self, t, demand_profiles, techs, buff_tech_list=None):
+        """
+        Apply thermal storage buffer (accumulator) operation.
+        
+        Manages charging/discharging of thermal storage, applies losses,
+        and handles energy transfer from other technologies.
+        
+        Args:
+            t (int): Current time step (hour)
+            demand_profiles (dict): Dictionary containing demand profiles
+            techs (dict): Dictionary of all technology objects
+            buff_tech_list (list, optional): List of technology names that can charge buffer.
+                Defaults to empty list.
+        """
         if buff_tech_list is None:
             buff_tech_list = []
 
@@ -100,6 +188,24 @@ class Tech:
             self.charging[t] += to_buffer
 
     def apply_MTS(self, t, demand_profiles, energy_prices, temp_cold_well, techs, ates, model_settings, buff_tech_list=None):
+        """
+        Apply thermal energy storage (MTS) system with heat pump operation.
+        
+        Manages discharge for heating demand and charging from available
+        thermal sources, considering COP calculations and temperature-dependent
+        performance.
+        
+        Args:
+            t (int): Current time step (hour)
+            demand_profiles (dict): Dictionary containing demand profiles
+            energy_prices (dict): Dictionary with 'Elec Price' electricity prices [€/kWh]
+            temp_cold_well (float): Temperature of cold water supply [°C]
+            techs (dict): Dictionary of all technology objects
+            ates (ATESDoublet): Aquifer thermal energy storage system
+            model_settings (dict): Model configuration including 'Temp_heating'
+            buff_tech_list (list, optional): List of technologies that can charge MTS.
+                Defaults to ("Condenser", "Geothermal").
+        """
         if buff_tech_list is None:
             buff_tech_list = ("Condenser", "Geothermal")
 
@@ -161,6 +267,19 @@ class Tech:
 
 
 def initialize_techs(n_hours, excel_params):
+    """
+    Initialize all technology objects with parameters from configuration.
+    
+    Creates Tech instances for all available technologies and populates them
+    with hourly arrays and parameters from Excel configuration.
+    
+    Args:
+        n_hours (int): Number of hourly time steps in simulation
+        excel_params (dict): Configuration parameters keyed by technology name
+        
+    Returns:
+        dict: Dictionary of initialized Tech objects keyed by technology name
+    """
     tech_names = ["Condenser", "Geothermal", "CHP", "Eboiler", "Buffer", "MTS", "Gasboiler"]
     techs = {name: Tech(name, n_hours) for name in tech_names}
 
@@ -205,12 +324,39 @@ def initialize_techs(n_hours, excel_params):
 
 
 def prep(t, t_prev, t_curr):
+    """
+    Prepare temperature arrays for next internal step.
+    
+    Swaps temperature arrays after the first internal step to alternate
+    between previous and current state storage.
+    
+    Args:
+        t (int): Current internal time step
+        t_prev (np.ndarray): Previous temperature state
+        t_curr (np.ndarray): Current temperature state
+        
+    Returns:
+        tuple: (updated t_prev, updated t_curr) - either swapped or unchanged
+    """
     if t != 1:
         t_prev, t_curr = t_curr, t_prev
     return t_prev, t_curr
 
 
 def compute_flow_rate(heat, delta_t, dt, c_w, v_in_cum):
+    """
+    Calculate cumulative volume and flow rate for thermal transport.
+    
+    Args:
+        heat (float): Thermal energy input [J]
+        delta_t (float): Temperature difference [°C/K]
+        dt (float): Time step duration [s]
+        c_w (float): Heat capacity of water [J/(m³·K)]
+        v_in_cum (float): Cumulative volume before update [m³]
+        
+    Returns:
+        tuple: (updated cumulative volume [m³], flow rate [m³/s])
+    """
     if heat != 0:
         f_in = heat / (c_w * delta_t)
         f_in_timestep = f_in * dt / 3600
@@ -220,6 +366,26 @@ def compute_flow_rate(heat, delta_t, dt, c_w, v_in_cum):
 
 
 def flux_and_retard(v_in_cum, v_mesh, t_prev, t_in, t_amb, c_s_weighted, c_w_weighted, c_aq_inv, n_mesh):
+    """
+    Update temperature profile based on fluid transport through mesh.
+    
+    Implements Eulerian-type advection of temperatures as fluid moves
+    through the aquifer mesh elements.
+    
+    Args:
+        v_in_cum (float): Cumulative volume displacement [m³]
+        v_mesh (float): Volume per mesh element [m³]
+        t_prev (np.ndarray): Temperature array
+        t_in (float): Inlet temperature [°C]
+        t_amb (float): Ambient temperature [°C]
+        c_s_weighted (float): Weighted solid heat capacity
+        c_w_weighted (float): Weighted water heat capacity
+        c_aq_inv (float): Inverse aquifer heat capacity
+        n_mesh (int): Current number of active mesh elements
+        
+    Returns:
+        tuple: (updated temperatures, updated cumulative volume, updated mesh count)
+    """
     if v_in_cum >= v_mesh:
         v_in = int(v_in_cum // v_mesh)
         v_in_cum -= v_in * v_mesh
@@ -237,6 +403,27 @@ def flux_and_retard(v_in_cum, v_mesh, t_prev, t_in, t_amb, c_s_weighted, c_w_wei
 
 
 def update_temperatures(t_prev, t_curr, n_mesh, t_amb, dt, inv_cap, bucket_map, g_con, q_in, q_out):
+    """
+    Update temperature distribution considering thermal conduction.
+    
+    Calculates heat flux between mesh buckets and updates temperatures
+    accordingly for conduction losses.
+    
+    Args:
+        t_prev (np.ndarray): Previous temperature state
+        t_curr (np.ndarray): Current temperature state
+        n_mesh (int): Number of active mesh elements
+        t_amb (float): Ambient temperature [°C]
+        dt (float): Time step [s]
+        inv_cap (np.ndarray): Inverse heat capacity per bucket
+        bucket_map (np.ndarray): Mapping of mesh elements to buckets
+        g_con (np.ndarray): Thermal conductance between buckets [W/K]
+        q_in (np.ndarray): Heat flow in to each bucket [W]
+        q_out (np.ndarray): Heat flow out from each bucket [W]
+        
+    Returns:
+        tuple: (updated current temperatures, average bucket temperatures)
+    """
     bucket_ranges = [(0, 100, 1), (100, 1100, 10), (1100, 11100, 100), (11100, 61100, 1000)]
     t_avg = np.concatenate([t_prev[s:e].reshape(-1, n).mean(1) for (s, e, n) in bucket_ranges])
     t_avg[t_avg <= t_amb + 0.01] = t_amb
@@ -252,6 +439,7 @@ def update_temperatures(t_prev, t_curr, n_mesh, t_amb, dt, inv_cap, bucket_map, 
 
 @njit(cache=True)
 def prep_nb(t, t_prev, t_curr):
+    """Numba-optimized version of prep(). Swaps temperature arrays after first step."""
     if t != 1:
         return t_curr, t_prev
     return t_prev, t_curr
@@ -259,6 +447,7 @@ def prep_nb(t, t_prev, t_curr):
 
 @njit(cache=True)
 def compute_flow_rate_nb(heat, delta_t, dt, c_w, v_in_cum):
+    """Numba-optimized version of compute_flow_rate(). Calculates cumulative volume and flow rate."""
     if heat != 0.0:
         f_in = heat / (c_w * delta_t)
         f_in_timestep = f_in * dt / 3600.0
@@ -271,6 +460,7 @@ def compute_flow_rate_nb(heat, delta_t, dt, c_w, v_in_cum):
 
 @njit(cache=True)
 def flux_and_retard_nb(v_in_cum, v_mesh, t_prev, t_in, t_amb, c_s_weighted, c_w_weighted, c_aq_inv, n_mesh):
+    """Numba-optimized version of flux_and_retard(). Updates temperature profile from fluid transport."""
     if v_in_cum >= v_mesh:
         v_in = int(v_in_cum // v_mesh)
         v_in_cum -= v_in * v_mesh
@@ -313,6 +503,10 @@ def update_temperatures_nb(
     dt_arr,
     t_avg,
 ):
+    """
+    Numba-optimized version of update_temperatures(). Updates temperature distribution 
+    with thermal conduction effects.
+    """
     floor_temp = t_amb + 0.01
 
     for b in range(t_avg.size):
@@ -370,6 +564,13 @@ def ates_step_nb(
     q_out,
     dt_arr,
 ):
+    """
+    Numba-optimized single hour ATES step. Executes multiple internal time steps
+    for flow advection and temperature conduction.
+    
+    Performs one complete hourly simulation of aquifer thermal energy storage,
+    including fluid transport and thermal diffusion within the aquifer.
+    """
     flowrate = 0.0
 
     for internal_t in range(n_internal_steps):
@@ -408,7 +609,32 @@ def ates_step_nb(
 
 
 class ATESModel:
+    """
+    Models single aquifer thermal energy storage (ATES) well behavior.
+    
+    Simulates temperature evolution in a single well through advection of
+    fluid transport and conduction between aquifer layers. Uses mesh-based
+    approach with size-dependent buckets for computational efficiency.
+    
+    Attributes:
+        factor (float): Scaling factor for internal time step
+        T_amb (float): Ambient temperature [°C]
+        T_in (float): Inlet/operating temperature [°C]
+        T_hot (float): Hot well target temperature [°C]
+        N_mesh (int): Current number of active mesh elements
+        flowrate (float): Current flow rate [m³/s]
+    """
     def __init__(self, factor, t_in, t_in_hot, t_initial=None):
+        """
+        Initialize ATES model with aquifer properties.
+        
+        Args:
+            factor (float): Scaling factor for internal time step
+            t_in (float): Inlet temperature [°C]
+            t_in_hot (float): Hot well target temperature [°C]
+            t_initial (np.ndarray, optional): Initial temperature profile.
+                If None, initializes to ambient temperature.
+        """
         self.factor = factor
         self.flowrate = 0
 
@@ -463,6 +689,16 @@ class ATESModel:
         self.reset_state(t_initial)
 
     def reset_state(self, t_initial=None):
+        """
+        Reset ATES model to initial state.
+        
+        Args:
+            t_initial (np.ndarray, optional): Initial temperature profile [°C].
+                Must have length N_mesh_max. If None, initializes to ambient temperature.
+                
+        Raises:
+            ValueError: If t_initial has incorrect length
+        """
         if t_initial is None:
             self.T_prev = np.ones(self.N_mesh_max) * self.T_amb
             self.T_curr = np.ones(self.N_mesh_max) * self.T_amb
@@ -481,6 +717,20 @@ class ATESModel:
         self.V_in_cum = 0.0
 
     def step(self, heat, delta_t):
+        """
+        Perform one hour of ATES simulation.
+        
+        Simulates fluid flow and temperature changes over one hour by executing
+        multiple internal time steps for numerical stability.
+        
+        Args:
+            heat (float): Net thermal energy [J/hour]
+            delta_t (float or None): Temperature difference [°C]. 
+                Used for flow calculation; None means no flow.
+                
+        Returns:
+            tuple: (outlet temperature profile, cumulative volume, flow rate [m³/s])
+        """
         if NUMBA_AVAILABLE and delta_t is not None:
             self.T_prev, self.T_curr, self.T_avg, self.V_in_cum, self.N_mesh, self.flowrate = ates_step_nb(
                 heat,
@@ -541,7 +791,29 @@ class ATESModel:
 
 
 class ATESDoublet:
+    """
+    Models a doublet of hot and cold aquifer thermal energy storage wells.
+    
+    Manages paired ATES wells for district heating and cooling with
+    temperature recovery between supply and return flows.
+    
+    Attributes:
+        hot (ATESModel): Hot well ATES model
+        cold (ATESModel): Cold well ATES model
+        T_hot_all (list or np.ndarray): Time series of hot well outlet temperatures
+        T_cold_all (list or np.ndarray): Time series of cold well outlet temperatures
+    """
     def __init__(self, factor=2, t_in_hot=50, t_in_cold=25, n_hours=None):
+        """
+        Initialize ATES doublet system.
+        
+        Args:
+            factor (float): Scaling factor for ATES internal time steps
+            t_in_hot (float): Hot well inlet/supply temperature [°C]
+            t_in_cold (float): Cold well inlet temperature [°C]
+            n_hours (int, optional): Total hours in simulation for pre-allocation.
+                If None, uses list storage instead of arrays.
+        """
         self.hot = ATESModel(factor=factor, t_in=t_in_hot, t_in_hot=t_in_hot)
         self.cold = ATESModel(factor=factor, t_in=t_in_cold, t_in_hot=t_in_hot)
 
@@ -555,6 +827,12 @@ class ATESDoublet:
         self._step_index = 0
 
     def last_hot_temp(self):
+        """
+        Get temperature of hot well outlet from previous step.
+        
+        Returns:
+            float: Hot well outlet temperature [°C]
+        """
         if self._step_index == 0:
             return self.hot.T_in
         if self._n_hours is not None:
@@ -562,6 +840,12 @@ class ATESDoublet:
         return self.T_hot_all[-1]
 
     def last_cold_temp(self):
+        """
+        Get temperature of cold well outlet from previous step.
+        
+        Returns:
+            float: Cold well outlet temperature [°C]
+        """
         if self._step_index == 0:
             return self.cold.T_in
         if self._n_hours is not None:
@@ -569,6 +853,24 @@ class ATESDoublet:
         return self.T_cold_all[-1]
 
     def step(self, heat):
+        """
+        Perform one hour ATES doublet operation.
+        
+        Updates both hot and cold wells with net heat flow (positive = charging hot,
+        negative = discharging hot).
+        
+        Args:
+            heat (float): Net thermal energy to store/recover [J/hour].
+                Positive: charge hot well and discharge cold well.
+                Negative: discharge hot well and charge cold well.
+                
+        Returns:
+            tuple: (hot outlet temperature, cold outlet temperature, 
+                   hot flow rate [m³/s], cold flow rate [m³/s])
+                   
+        Raises:
+            ValueError: If attempting to discharge hot well on first step
+        """
         if self._step_index == 0:
             if heat >= 0:
                 delta_t = self.hot.T_in - self.cold.T_in
@@ -596,6 +898,30 @@ class ATESDoublet:
 
 
 def run_simulation(n_hours, techs, demand_profiles, energy_prices, temp_cold_well, ates, model_settings, progress_callback=None):
+    """
+    Execute full district heating/cooling system simulation.
+    
+    Simulates an entire heating season hour-by-hour, calculating deployment
+    of all technologies based on prices and demand, tracking energy flows
+    through thermal storage and aquifer systems.
+    
+    Args:
+        n_hours (int): Number of hours to simulate
+        techs (dict): Dictionary of initialized Tech objects
+        demand_profiles (dict): Dictionary with 'Heat Demand', 'Cold Demand',
+            and 'Outside Temp' hourly time series [kW], [kW], [°C]
+        energy_prices (dict): Dictionary with 'Elec Price' and 'Gas Price'
+            hourly time series [€/kWh]
+        temp_cold_well (float): Temperature setpoint of cold water supply [°C]
+        ates (ATESDoublet): Aquifer thermal energy storage system
+        model_settings (dict): Configuration including 'Temp_heating' [°C]
+        progress_callback (callable, optional): Function called with progress 
+            percentage (0-100) at intervals during simulation
+            
+    Returns:
+        dict: Updated demand_profiles dictionary with residual demand
+            and technology-specific demand profiles after each technology
+    """
     demand_profiles = {k: v.copy() for k, v in demand_profiles.items()}
     demand_profiles["Residual Heat Demand"] = demand_profiles["Heat Demand"].copy()
     demand_profiles["Previous Residual Heat Demand"] = demand_profiles["Residual Heat Demand"].copy()

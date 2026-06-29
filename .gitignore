@@ -1,0 +1,29 @@
+# Virtual environments
+.conda
+venv/
+env/
+
+# IDE and development
+.vscode/
+.devcontainer/
+*.swp
+*.swo
+
+# Cache and compiled files
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Abacus AI
+.abacusai
+
+# Streamlit cache
+.streamlit/
+
+# Project-specific
+*.xlsx~
