@@ -11,7 +11,7 @@ from input_processing import get_input
 from output_generation import build_kpis, build_results_frame
 
 
-def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str = None, mto_flow_limit_override: float = None, years: int = 1, geo_power: float = None, chp_power: float = None, target_heat_demand_gwh: float = None, temp_cold_well: float = 25, temp_hot_well: float = 50, progress_callback=None):
+def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str | None = None, mto_flow_limit_override: float | None = None, years: int = 1, geo_power: float | None = None, chp_power: float | None = None, target_heat_demand_gwh: float | None = None, temp_cold_well: float = 25, temp_hot_well: float = 50, progress_callback=None):
     """Run a complete thermal energy system simulation.
 
     Executes a simulation of the ATES doublet thermal energy storage system with

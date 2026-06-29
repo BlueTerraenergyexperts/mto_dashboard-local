@@ -99,3 +99,7 @@ def list_crop_sheets(file_content: bytes):
         list: Sheet names representing available crops, excluding system sheets
             ("Params", "Settings", "Results", "ATES", "Prices", "Guide").
     """
+    xls = BytesIO(file_content)
+    excel_file = pd.ExcelFile(xls)
+    excluded_sheets = {"Params", "Settings", "Results", "ATES", "Prices", "Guide"}
+    return [sheet for sheet in excel_file.sheet_names if sheet not in excluded_sheets]

@@ -81,7 +81,7 @@ def set_cached_scenario_result(scenario_key, result):
         cache.pop(oldest_key, None)
 
 
-def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: float, years: int = 3, geo_power: float = None, chp_power: float = None, target_heat_demand_gwh: float = None, temp_cold_well: float = 25, temp_hot_well: float = 50):
+def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: float, years: int = 3, geo_power: float | None = None, chp_power: float | None = None, target_heat_demand_gwh: float | None = None, temp_cold_well: float = 25, temp_hot_well: float = 50):
     progress_text = st.empty()
     progress_bar = st.progress(0)
 
