@@ -1,16 +1,16 @@
-# MTO Dashboard - District Heating & Cooling Thermal Energy Storage Simulator
+# MTO Dashboard - Greenhouse Horticulture Thermal Energy Storage Simulator
 
-A Python-based Streamlit application for simulating and analyzing aquifer thermal energy storage (ATES) systems combined with various heating/cooling technologies in district energy networks.
+A Python-based Streamlit application for simulating and analyzing aquifer thermal energy storage (ATES) systems combined with various heating/cooling technologies for greenhouse horticulture energy supply.
 
 ## Overview
 
-The MTO Dashboard provides a comprehensive simulation environment for analyzing the performance of district heating and cooling systems that incorporate:
+The MTO Dashboard provides a comprehensive simulation environment for analyzing the performance of greenhouse energy systems that incorporate:
 
 - **Aquifer Thermal Energy Storage (ATES)** - Seasonal storage with hot and cold wells
-- **Geothermal Heat** - Direct geothermal energy supply
-- **Combined Heat & Power (CHP)** - Gas-fired power generation with heat recovery
+- **Geothermal Heat** - Direct geothermal energy supply for greenhouse heating
+- **Combined Heat & Power (CHP)** - Gas-fired power generation with heat recovery for process heat and electricity
 - **Heat Pumps** - Condenser and electric boiler units for additional capacity
-- **Thermal Buffers** - Short-term thermal storage to manage peak demands
+- **Thermal Buffers** - Short-term thermal storage to manage peak horticulture heating and cooling demands
 - **Gas Boilers** - Backup heating capacity
 
 The simulator uses hourly time-step calculations with detailed aquifer thermal models including fluid transport advection and conduction losses, optimized with Numba JIT compilation for performance.
@@ -18,10 +18,10 @@ The simulator uses hourly time-step calculations with detailed aquifer thermal m
 ## Features
 
 - **Interactive Dashboard UI** - Streamlit-based interface for scenario configuration and visualization
-- **Flexible Input Configuration** - Excel-based parameter input with support for multiple crop types
-- **Hourly Simulation** - Accurate year-round or multi-year energy balance calculations
+- **Flexible Input Configuration** - Excel-based parameter input with support for multiple greenhouse crop types
+- **Hourly Simulation** - Accurate year-round or multi-year energy balance calculations for greenhouse heating and cooling
 - **Advanced ATES Modeling** - Mesh-based aquifer thermal model with temperature tracking
-- **Technology Integration** - Automatic dispatch of heating/cooling technologies based on energy prices and demand
+- **Technology Integration** - Automatic dispatch of heating/cooling technologies based on energy prices and crop demand
 - **Performance Analytics** - KPIs for efficiency, costs, and energy flows
 - **Data Visualization** - Interactive plots of hourly and daily energy generation
 - **Scenario Caching** - Fast re-execution of previously run scenarios
@@ -291,9 +291,9 @@ ATES systems store thermal energy in aquifers for seasonal energy recovery. This
 - Well-pair coordination (hot/cold)
 - Thermal losses through conduction
 
-### District Heating & Cooling
+### Greenhouse Horticulture Energy Management
 
-Integrated heating/cooling networks optimize renewable energy sources, thermal storage, and supplementary generation for energy efficiency and cost optimization.
+Integrated greenhouse energy systems optimize renewable heat sources, seasonal thermal storage, and supplementary generation to support stable crop climate control and lower operating costs.
 
 ## Changelog
 
