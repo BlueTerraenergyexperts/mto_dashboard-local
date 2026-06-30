@@ -117,7 +117,8 @@ with col_title:
         "De input voor dit model betreft een uurwaarden energieprofiel, en een lijst met parameters. "
         "Het model berekent op uurbasis de warmtemix en de ontrekkings- en injectietemperaturen van de bron. "
         "Het model gebruikt de energie-eenheid megawattuur (MWh). Om dit om te rekenen naar m³ aardgas kan je MWh "
-        "vermenigvuldigen met 113,76. De output van het model kan worden gedownload als CSV-bestand."
+        "vermenigvuldigen met 113,76. Het model kan je runnen door de inputwaarden in te stellen en op 'Run Model' te klikken. "
+        "De output van het model kan worden gedownload als CSV-bestand."
     )
 with col_logo:
     st.image("logo-1 BT.png", width=140)
