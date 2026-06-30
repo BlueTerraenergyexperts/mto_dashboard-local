@@ -33,6 +33,7 @@ GITHUB_URL = "https://github.com/BlueTerraenergyexperts/mto_dashboard-local"
 COMPANY_NAME = "BlueTerra"
 COMPANY_URL = "https://blueterra.nl"
 AUTHOR_NAME = "Jeroen Larrivee"
+RESEARCHER_NAME = "Bert Kerst"
 
 def _round_or_none(value: float | None, digits: int = 4):
     if value is None:
@@ -110,13 +111,13 @@ def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: 
 col_title, col_logo = st.columns([4, 1])
 with col_title:
     st.title("🔥 Dashboard MTO warmteopslag")
-    st.caption(
+    st.markdown(
         "Rekenmodel van BlueTerra voor het simuleren van midden temperatuur warmteopslag in de bodem. "
-        "Dit model is ontwikkeld vanuit het TKI project MTO in de glastuinbouw. "
+        "Dit model is ontwikkeld vanuit het [TKI Project MTO in de glastuinbouw](https://www.tkiwatertechnologie.nl/projecten/middelhoge-temperatuur-opslag-mto-voor-de-glastuinbouw/). "
         "De input voor dit model betreft een uurwaarden energieprofiel, en een lijst met parameters. "
         "Het model berekent op uurbasis de warmtemix en de ontrekkings- en injectietemperaturen van de bron. "
         "Het model gebruikt de energie-eenheid megawattuur (MWh). Om dit om te rekenen naar m³ aardgas kan je MWh "
-        "vermenigvuldigen met 113,76. Dit model is gebaseerd op onderzoek van Bert Kerst en is in ontwikkeling."
+        "vermenigvuldigen met 113,76. De output van het model kan worden gedownload als CSV-bestand."
     )
 with col_logo:
     st.image("logo-1 BT.png", width=140)
@@ -209,14 +210,11 @@ st.sidebar.markdown(f"**Bestand:** {input_file_path.name}")
 st.sidebar.markdown(f"**MTO flow limit:** {mto_flow_limit} m³/h")
 st.sidebar.markdown("---")
 st.sidebar.markdown(
-    f"**Versie:** {APP_VERSION}  \
-"
-    f"**Datum:** {APP_RELEASE_DATE}  \
-"
-    f"**Auteur:** {AUTHOR_NAME}  \
-"
-    f"[Laatste versie op GitHub]({GITHUB_URL})  \
-"
+    f"**Versie:** {APP_VERSION}\n\n"
+    f"**Datum:** {APP_RELEASE_DATE}\n\n"
+    f"**Auteur:** {AUTHOR_NAME}\n\n"
+    f"**Onderzoeker:** {RESEARCHER_NAME}\n\n"
+    f"[Laatste versie op GitHub]({GITHUB_URL})\n\n"
     f"[{COMPANY_NAME}]({COMPANY_URL})"
 )
 
