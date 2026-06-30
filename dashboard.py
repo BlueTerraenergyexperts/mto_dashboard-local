@@ -29,7 +29,7 @@ CACHE_MAX_ENTRIES = 50
 
 APP_VERSION = "0.2.1"
 APP_RELEASE_DATE = date.today().isoformat()
-GITHUB_URL = "https://github.com/Jlar01/mto_dashboard-local"
+GITHUB_URL = "https://github.com/BlueTerraenergyexperts/mto_dashboard-local"
 COMPANY_NAME = "BlueTerra"
 COMPANY_URL = "https://blueterra.nl"
 AUTHOR_NAME = "Jeroen Larrivee"
