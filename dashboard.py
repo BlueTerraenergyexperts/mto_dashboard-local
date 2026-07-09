@@ -27,9 +27,9 @@ def cached_list_crop_sheets(file_content: bytes):
 CACHE_TTL_SECONDS = 24 * 3600
 CACHE_MAX_ENTRIES = 50
 
-APP_VERSION = "0.2.1"
+APP_VERSION = "0.2.2"
 APP_RELEASE_DATE = date.today().isoformat()
-GITHUB_URL = "https://github.com/BlueTerraenergyexperts/mto_dashboard-local"
+SOURCE_URL = "https://www.kasalsenergiebron.nl/nieuws/handboek-beschikbaar-potentie-en-inpassing-mto-in-de-glastuinbouw/"
 COMPANY_NAME = "BlueTerra"
 COMPANY_URL = "https://blueterra.nl"
 AUTHOR_NAME = "Jeroen Larrivee"
@@ -112,13 +112,16 @@ col_title, col_logo = st.columns([4, 1])
 with col_title:
     st.title("🔥 Dashboard MTO warmteopslag")
     st.markdown(
-        "Rekenmodel van BlueTerra voor het simuleren van midden temperatuur warmteopslag in de bodem. "
-        "Dit model is ontwikkeld vanuit het [TKI Project MTO in de glastuinbouw](https://www.tkiwatertechnologie.nl/projecten/middelhoge-temperatuur-opslag-mto-voor-de-glastuinbouw/). "
-        "De input voor dit model betreft een uurwaarden energieprofiel, en een lijst met parameters. "
+        "Rekenmodel van BlueTerra voor het simuleren van midden temperatuur warmteopslag (MTO) in de bodem. "
+        "Dit model is ontwikkeld vanuit het TKI Project MTO in de glastuinbouw. "
+        "De input voor dit rekenmodel betreft een uurwaarden energieprofiel, en een lijst met parameters. "
         "Het model berekent op uurbasis de warmtemix en de ontrekkings- en injectietemperaturen van de bron. "
         "Het model gebruikt de energie-eenheid megawattuur (MWh). Om dit om te rekenen naar m³ aardgas kan je MWh "
         "vermenigvuldigen met 113,76. Het model kan je runnen door de inputwaarden in te stellen en op 'Run Model' te klikken. "
         "De output van het model kan worden gedownload als CSV-bestand."
+        "Het bijbehorende handboek is beschikbaar op de website van [Kas als Energiebron](https://www.kasalsenergiebron.nl/nieuws/handboek-beschikbaar-potentie-en-inpassing-mto-in-de-glastuinbouw/). "
+        "Het handboek bevat meer informatie over MTO inclusief kostenkentallen. "
+        "Een (Engelstalige) beschrijving van het rekenmodel is beschikbaar op [Github](https://github.com/BlueTerraenergyexperts/mto_dashboard-local/blob/main/README.md). "
     )
 with col_logo:
     st.image("logo-1 BT.png", width=140)
@@ -215,7 +218,7 @@ st.sidebar.markdown(
     f"**Datum:** {APP_RELEASE_DATE}\n\n"
     f"**Auteur:** {AUTHOR_NAME}\n\n"
     f"**Onderzoeker:** {RESEARCHER_NAME}\n\n"
-    f"[Laatste versie op GitHub]({GITHUB_URL})\n\n"
+    f"[Handboek MTO (Kas als Energiebron)]({SOURCE_URL})\n\n"
     f"[{COMPANY_NAME}]({COMPANY_URL})"
 )
 
