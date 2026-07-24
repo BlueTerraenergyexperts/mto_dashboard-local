@@ -8,7 +8,7 @@ import plotly.graph_objects as go
 import streamlit as st
 
 from control_panel import run_dashboard_calculation
-from input_processing import list_crop_sheets
+from input_processing import list_crop_sheets, read_excel_sheets
 from output_generation import build_daily_output
 
 st.set_page_config(page_title="Dashboard MTO warmteopslag", layout="wide")
@@ -22,6 +22,11 @@ def nl(waarde, decimalen=0):
 @st.cache_data(show_spinner=False)
 def cached_list_crop_sheets(file_content: bytes):
     return list_crop_sheets(file_content)
+
+
+@st.cache_data(show_spinner=False)
+def cached_read_excel_sheets(file_content: bytes, crop: str):
+    return read_excel_sheets(file_content, crop)
 
 
 CACHE_TTL_SECONDS = 24 * 3600
@@ -90,6 +95,8 @@ def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: 
         progress_bar.progress(progress)
         progress_text.caption(f"Model wordt doorgerekend... {progress}%")
 
+    sheets = cached_read_excel_sheets(file_content, crop)
+
     results = run_dashboard_calculation(
         file_content,
         crop=crop,
@@ -101,6 +108,7 @@ def run_dashboard_with_progress(file_content: bytes, crop: str, mto_flow_limit: 
         temp_cold_well=temp_cold_well,
         temp_hot_well=temp_hot_well,
         progress_callback=update_progress,
+        sheets=sheets,
     )
 
     progress_bar.empty()

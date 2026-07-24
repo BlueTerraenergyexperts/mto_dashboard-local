@@ -9,7 +9,33 @@ import numpy as np
 import pandas as pd
 
 
-def get_input(file_content: bytes, crop="Tomaat", years=1, target_heat_demand_gwh=None):
+def read_excel_sheets(file_content: bytes, crop: str):
+    """Read the raw Excel sheets needed for a simulation input.
+
+    This performs the actual (relatively expensive) Excel parsing via openpyxl
+    and is separated from `get_input` so callers (e.g. the dashboard) can cache
+    the result per (file_content, crop) and avoid re-parsing the workbook when
+    only scenario parameters (years, target demand, ...) change.
+
+    Args:
+        file_content (bytes): Binary content of Excel input file.
+        crop (str): Crop type identifier matching a sheet name.
+
+    Returns:
+        dict: Dict with keys "df_demand", "df_prices", "df_params", "df_settings"
+            mapping to the corresponding raw DataFrames.
+    """
+    xls = BytesIO(file_content)
+    sheets = pd.read_excel(xls, sheet_name=[crop, "Prices", "Params", "Settings"])
+    return {
+        "df_demand": sheets[crop],
+        "df_prices": sheets["Prices"],
+        "df_params": sheets["Params"],
+        "df_settings": sheets["Settings"],
+    }
+
+
+def get_input(file_content: bytes, crop="Tomaat", years=1, target_heat_demand_gwh=None, sheets=None):
     """Read and process input data from an Excel configuration file.
 
     Loads demand profiles, energy prices, and system parameters from an Excel file.
@@ -29,6 +55,10 @@ def get_input(file_content: bytes, crop="Tomaat", years=1, target_heat_demand_gw
         target_heat_demand_gwh (float, optional): Scale demand profiles to match
             target annual heat demand in GWh. If None, uses "Total_heat_demand"
             from Settings sheet.
+        sheets (dict, optional): Pre-parsed sheets as returned by `read_excel_sheets`.
+            If provided, the Excel file is not re-parsed (useful for caching the
+            expensive I/O step across scenario reruns). If None, `file_content`
+            is parsed here.
 
     Returns:
         tuple: A tuple containing:
@@ -42,12 +72,13 @@ def get_input(file_content: bytes, crop="Tomaat", years=1, target_heat_demand_gw
             - local_settings (dict): Global settings from Settings sheet.
             - timesteps (pd.Series): Datetime index for each hour.
     """
-    xls = BytesIO(file_content)
-    sheets = pd.read_excel(xls, sheet_name=[crop, "Prices", "Params", "Settings"])
-    df_demand = sheets[crop]
-    df_prices = sheets["Prices"]
-    df_params = sheets["Params"]
-    df_settings = sheets["Settings"]
+    if sheets is None:
+        sheets = read_excel_sheets(file_content, crop)
+
+    df_demand = sheets["df_demand"].copy()
+    df_prices = sheets["df_prices"]
+    df_params = sheets["df_params"]
+    df_settings = sheets["df_settings"]
 
     df_demand["Timestep"] = pd.to_datetime(df_demand["Timestep"], errors="coerce")
     local_settings = df_settings.set_index("Parameter")["Value"].to_dict()

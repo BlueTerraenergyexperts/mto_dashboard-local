@@ -11,7 +11,7 @@ from input_processing import get_input
 from output_generation import build_kpis, build_results_frame
 
 
-def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str | None = None, mto_flow_limit_override: float | None = None, years: int = 1, geo_power: float | None = None, chp_power: float | None = None, target_heat_demand_gwh: float | None = None, temp_cold_well: float = 25, temp_hot_well: float = 50, progress_callback=None):
+def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str | None = None, mto_flow_limit_override: float | None = None, years: int = 1, geo_power: float | None = None, chp_power: float | None = None, target_heat_demand_gwh: float | None = None, temp_cold_well: float = 25, temp_hot_well: float = 50, progress_callback=None, sheets=None):
     """Run a complete thermal energy system simulation.
 
     Executes a simulation of the ATES doublet thermal energy storage system with
@@ -32,6 +32,10 @@ def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str | N
         temp_cold_well (float, optional): Cold well temperature (°C). Defaults to 25.
         temp_hot_well (float, optional): Hot well temperature (°C). Defaults to 50.
         progress_callback (callable, optional): Callback function for progress updates.
+        sheets (dict, optional): Pre-parsed Excel sheets as returned by
+            input_processing.read_excel_sheets. If provided, the Excel file is
+            not re-parsed, allowing the caller (e.g. the dashboard) to cache the
+            expensive I/O step across scenario reruns.
 
     Returns:
         tuple: A tuple containing:
@@ -45,6 +49,7 @@ def run_dashboard_calculation(file_content: bytes, crop: str, flow_mode: str | N
         crop=crop,
         years=years,
         target_heat_demand_gwh=target_heat_demand_gwh,
+        sheets=sheets,
     )
 
     if geo_power is not None:

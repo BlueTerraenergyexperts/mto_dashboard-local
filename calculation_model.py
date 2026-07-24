@@ -46,6 +46,7 @@ class Tech:
         self.available_power = np.zeros(n_hours)
         self.direct_use = np.zeros(n_hours)
         self.residual = np.zeros(n_hours)
+        self._residual_col_name = f"Residual Heat Demand after {name}"
         for k, v in kwargs.items():
             setattr(self, k, v)
 
@@ -141,9 +142,6 @@ class Tech:
             t (int): Current time step (hour)
             demand_profiles (dict): Dictionary containing demand and residual demand arrays
         """
-        col_name = f"Residual Heat Demand after {self.name}"
-        demand_profiles.setdefault(col_name, np.zeros_like(demand_profiles["Heat Demand"]))
-
         prev = demand_profiles["Residual Heat Demand"][t]
         demand_profiles["Previous Residual Heat Demand"][t] = prev
 
@@ -152,7 +150,7 @@ class Tech:
 
         self.direct_use[t] = prev - new_residual
         self.residual[t] = self.available_power[t] - self.direct_use[t]
-        demand_profiles[col_name][t] = new_residual
+        demand_profiles[self._residual_col_name][t] = new_residual
 
     def apply_buffer(self, t, demand_profiles, techs, buff_tech_list=None):
         """
@@ -925,6 +923,9 @@ def run_simulation(n_hours, techs, demand_profiles, energy_prices, temp_cold_wel
     demand_profiles = {k: v.copy() for k, v in demand_profiles.items()}
     demand_profiles["Residual Heat Demand"] = demand_profiles["Heat Demand"].copy()
     demand_profiles["Previous Residual Heat Demand"] = demand_profiles["Residual Heat Demand"].copy()
+
+    for tech in techs.values():
+        demand_profiles.setdefault(tech._residual_col_name, np.zeros_like(demand_profiles["Heat Demand"]))
 
     techs["Condenser"].calc_condenser_available_power(
         energy_prices,
