@@ -180,8 +180,8 @@ temp_cold_well = st.sidebar.slider(
 years = st.sidebar.radio(
     "📅 Aantal simulatiejaren",
     [1, 3, 5],
-    index=1,
-    help="Kies het aantal jaarreeks voor de berekening.",
+    index=0,
+    help="Kies het aantal jaren voor de berekening. De grafieken tonen de resultaten van het laatste jaar. De KPI's zijn gebaseerd op het laatste jaar.",
 )
 
 # Sliders: eerst warmtevraag, dan WKK (CHP) vermogen, dan geothermal
