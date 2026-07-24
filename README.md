@@ -1,6 +1,14 @@
 # MTO Dashboard - Greenhouse Horticulture Thermal Energy Storage Simulator
 
+Current version: 0.2.3
+
 A Python-based Streamlit application for simulating and analyzing aquifer thermal energy storage (ATES) systems combined with various heating/cooling technologies for greenhouse horticulture energy supply.
+
+## Recent updates
+
+### Version 0.2.3
+- Re-enabled the hot well temperature slider in the dashboard sidebar for easier scenario configuration.
+- Updated the project documentation to reflect the latest dashboard controls and versioning.
 
 ## Overview
 

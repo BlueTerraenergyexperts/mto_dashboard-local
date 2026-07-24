@@ -27,7 +27,7 @@ def cached_list_crop_sheets(file_content: bytes):
 CACHE_TTL_SECONDS = 24 * 3600
 CACHE_MAX_ENTRIES = 50
 
-APP_VERSION = "0.2.2"
+APP_VERSION = "0.2.3"
 APP_RELEASE_DATE = date.today().isoformat()
 SOURCE_URL = "https://www.kasalsenergiebron.nl/nieuws/handboek-beschikbaar-potentie-en-inpassing-mto-in-de-glastuinbouw/"
 COMPANY_NAME = "BlueTerra"
@@ -151,6 +151,15 @@ mto_flow_limit = st.sidebar.slider(
     help="Stel de flow direct in tussen 50 en 150 m³/h.",
 )
 
+temp_hot_well = st.sidebar.slider(
+    "🔥 Temp warme bron (°C)",
+    min_value=40,
+    max_value=60,
+    value=50,
+    step=1,
+    help="Stel de temperatuur van de warme bron in.",
+)
+
 temp_cold_well = st.sidebar.slider(
     "❄️ Temp koude bron (°C)",
     min_value=10,
@@ -159,18 +168,6 @@ temp_cold_well = st.sidebar.slider(
     step=1,
     help="Stel de temperatuur van de koude bron in.",
 )
-
-# temp_hot_well = st.sidebar.slider(
-#     "🔥 Temp warme bron (°C)",
-#     min_value=40,
-#     max_value=60,
-#     value=50,
-#     step=1,
-#     help="Stel de temperatuur van de warme bron in.",
-# )
-
-#temp_cold_well = 15
-temp_hot_well = 50
 
 years = st.sidebar.radio(
     "📅 Aantal simulatiejaren",
@@ -209,6 +206,11 @@ geo_power = st.sidebar.slider(
     help="Pas de geothermal power aan (overschrijft Excel-waarde)",
 )
 
+run_requested = st.sidebar.button("▶️ Run model")
+if not run_requested:
+    st.sidebar.info("Klik op 'Run model' nadat u het Excel-bestand hebt geüpload en de parameters hebt ingesteld.")
+    st.stop()
+
 st.sidebar.markdown("---")
 st.sidebar.markdown(f"**Bestand:** {input_file_path.name}")
 st.sidebar.markdown(f"**MTO flow limit:** {mto_flow_limit} m³/h")
@@ -221,11 +223,6 @@ st.sidebar.markdown(
     f"[Handboek MTO (Kas als Energiebron)]({SOURCE_URL})\n\n"
     f"[{COMPANY_NAME}]({COMPANY_URL})"
 )
-
-run_requested = st.sidebar.button("▶️ Run model")
-if not run_requested:
-    st.sidebar.info("Klik op 'Run model' nadat u het Excel-bestand hebt geüpload en de parameters hebt ingesteld.")
-    st.stop()
 
 scenario_key = build_scenario_key(
     file_content=file_content,
@@ -330,7 +327,7 @@ if {"T_hot_all", "T_cold_all"}.issubset(df_results.columns):
         height=320,
         xaxis_title="Time [hours]",
         yaxis_title="T [°C]",
-        yaxis=dict(range=[0, 52]),
+        yaxis=dict(range=[0, 62]),
         margin=dict(t=30, b=30),
         hovermode="x unified",
     )
